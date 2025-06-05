@@ -223,7 +223,7 @@ resource "aws_cloudfront_distribution" "web" {
   comment             = "terra-cloudfront"
   aliases             = [var.delegated_domain]
   default_root_object = ""
-  origins {
+  origin {
     domain_name = aws_lb.web.dns_name
     origin_id   = "terra-elb"
     custom_origin_config {
