@@ -2,7 +2,7 @@
 
 ## 事前準備
 
-1. AWS CLI認証情報を設定してください。
+1. [AWS CLI認証情報の設定方法](./aws-credentials.md) を参照してください。
 2. `variables.tf` の `delegated_domain`, `delegated_ns_records`, `public_key` を適切に設定してください。
 
 ## 初期化
