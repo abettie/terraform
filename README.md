@@ -6,6 +6,16 @@
 2. [AWS CLI認証情報の設定方法](./aws-credentials.md) を参照してください。
 3. `variables.tf` の `delegated_domain`, `delegated_ns_records`, `public_key` を適切に設定してください。
 
+## 変数ファイルの作成
+
+プロジェクトルートに `.gitignore` で管理外となる `terraform.tfvars` ファイルを作成し、以下のように記載してください。
+
+```hcl
+delegated_domain      = "example.com"
+delegated_ns_records  = ["ns-xxxx.awsdns-xx.com.","ns-yyyy.awsdns-yy.net."]
+public_key            = "ssh-rsa AAAA..."
+```
+
 ## 初期化
 
 ```sh
@@ -15,10 +25,7 @@ terraform init
 ## プラン作成
 
 ```sh
-terraform plan \
-  -var 'delegated_domain=example.com' \
-  -var 'delegated_ns_records=["ns-xxxx.awsdns-xx.com.","ns-yyyy.awsdns-yy.net."]' \
-  -var 'public_key=ssh-rsa AAAA...'
+terraform plan
 ```
 
 ## 適用
