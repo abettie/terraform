@@ -1,34 +1,4 @@
-resource "aws_route53_zone" "delegated" {
-  name = var.delegated_domain
-  tags = {
-    Name = "terra-route53"
-  }
-}
-
-resource "null_resource" "wait_for_ns_update" {
-  provisioner "local-exec" {
-    command = <<EOC
-      echo "=============================================="
-      echo "Route53ホストゾーンが作成されました。"
-      echo "お名前ドットコムの管理画面で、以下のNSレコードを手動で登録してください:"
-      echo ""
-      aws route53 get-hosted-zone --id ${aws_route53_zone.delegated.id} --query 'DelegationSet.NameServers' --output text
-      echo ""
-      echo "登録が完了したらEnterキーを押してください。"
-      read
-      echo "続行します..."
-      echo "=============================================="
-    EOC
-    interpreter = ["/bin/bash", "-c"]
-  }
-  triggers = {
-    zone_id = aws_route53_zone.delegated.id
-  }
-  depends_on = [aws_route53_zone.delegated]
-}
-
 resource "aws_acm_certificate" "tokyo" {
-  depends_on = [null_resource.wait_for_ns_update]
   provider          = aws.tokyo
   domain_name       = var.delegated_domain
   validation_method = "DNS"
@@ -38,7 +8,6 @@ resource "aws_acm_certificate" "tokyo" {
 }
 
 resource "aws_acm_certificate" "virginia" {
-  depends_on = [null_resource.wait_for_ns_update]
   provider          = aws.virginia
   domain_name       = var.delegated_domain
   validation_method = "DNS"

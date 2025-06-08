@@ -4,7 +4,8 @@
 
 1. [Terraformのインストール方法](./terraform-install.md) を参照してTerraformをインストールしてください。
 2. [AWS CLI認証情報の設定方法](./aws-credentials.md) を参照してください。
-3. `variables.tf` の `delegated_domain`, `public_key` を適切に設定してください。
+3. Route53でホストゾーンを作成し、そのNSレコードをお名前ドットコムの管理画面で手動で設定してください（この作業はTerraformの処理対象外です）。
+4. `variables.tf` の `delegated_domain`, `public_key` を適切に設定してください。
 
 ## 変数ファイルの作成
 
