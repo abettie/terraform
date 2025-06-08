@@ -22,7 +22,7 @@ resource "aws_route53_record" "tokyo_cert_validation" {
       record = dvo.resource_record_value
     }
   }
-  zone_id = var.route53_zone_id
+  zone_id = data.aws_route53_zone.delegated.zone_id
   name    = each.value.name
   type    = each.value.type
   records = [each.value.record]
@@ -53,7 +53,7 @@ resource "aws_route53_record" "virginia_cert_validation" {
       record = dvo.resource_record_value
     }
   }
-  zone_id = var.route53_zone_id
+  zone_id = data.aws_route53_zone.delegated.zone_id
   name    = each.value.name
   type    = each.value.type
   records = [each.value.record]
@@ -331,4 +331,10 @@ resource "aws_cloudfront_distribution" "web" {
   tags = {
     Name = "terra-cloudfront"
   }
+}
+
+// Route53ゾーンIDを自動取得（ゾーン名から）
+data "aws_route53_zone" "delegated" {
+  name         = var.delegated_domain
+  private_zone = false
 }
