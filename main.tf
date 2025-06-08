@@ -41,23 +41,7 @@ resource "aws_acm_certificate" "virginia" {
 resource "aws_acm_certificate_validation" "virginia" {
   provider                = aws.virginia
   certificate_arn         = aws_acm_certificate.virginia.arn
-  validation_record_fqdns = [for record in aws_route53_record.virginia_cert_validation : record.fqdn]
-}
-
-resource "aws_route53_record" "virginia_cert_validation" {
-  provider = aws.tokyo
-  for_each = {
-    for dvo in aws_acm_certificate.virginia.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      type   = dvo.resource_record_type
-      record = dvo.resource_record_value
-    }
-  }
-  zone_id = data.aws_route53_zone.delegated.zone_id
-  name    = each.value.name
-  type    = each.value.type
-  records = [each.value.record]
-  ttl     = 300
+  validation_record_fqdns = [for record in aws_route53_record.tokyo_cert_validation : record.fqdn]
 }
 
 // VPC
