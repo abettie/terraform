@@ -7,6 +7,28 @@ resource "aws_acm_certificate" "tokyo" {
   }
 }
 
+resource "aws_acm_certificate_validation" "tokyo" {
+  provider                = aws.tokyo
+  certificate_arn         = aws_acm_certificate.tokyo.arn
+  validation_record_fqdns = [for record in aws_route53_record.tokyo_cert_validation : record.fqdn]
+}
+
+resource "aws_route53_record" "tokyo_cert_validation" {
+  provider = aws.tokyo
+  for_each = {
+    for dvo in aws_acm_certificate.tokyo.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      type   = dvo.resource_record_type
+      record = dvo.resource_record_value
+    }
+  }
+  zone_id = var.route53_zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 300
+}
+
 resource "aws_acm_certificate" "virginia" {
   provider          = aws.virginia
   domain_name       = var.delegated_domain
@@ -14,6 +36,28 @@ resource "aws_acm_certificate" "virginia" {
   tags = {
     Name = "terra-acm-virginia"
   }
+}
+
+resource "aws_acm_certificate_validation" "virginia" {
+  provider                = aws.virginia
+  certificate_arn         = aws_acm_certificate.virginia.arn
+  validation_record_fqdns = [for record in aws_route53_record.virginia_cert_validation : record.fqdn]
+}
+
+resource "aws_route53_record" "virginia_cert_validation" {
+  provider = aws.tokyo
+  for_each = {
+    for dvo in aws_acm_certificate.virginia.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      type   = dvo.resource_record_type
+      record = dvo.resource_record_value
+    }
+  }
+  zone_id = var.route53_zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 300
 }
 
 // VPC
