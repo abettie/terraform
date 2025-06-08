@@ -257,6 +257,7 @@ resource "aws_lb_listener" "https" {
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
   certificate_arn   = aws_acm_certificate.tokyo.arn
+  depends_on        = [aws_acm_certificate_validation.tokyo]
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.web.arn
@@ -307,6 +308,7 @@ resource "aws_cloudfront_distribution" "web" {
     acm_certificate_arn = aws_acm_certificate.virginia.arn
     ssl_support_method  = "sni-only"
   }
+  depends_on = [aws_acm_certificate_validation.virginia]
   restrictions {
     geo_restriction {
       restriction_type = "none"
