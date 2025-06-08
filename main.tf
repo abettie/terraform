@@ -160,6 +160,48 @@ resource "aws_instance" "web" {
   tags = {
     Name = "terra-ec2"
   }
+  user_data = <<-EOF
+    #!/bin/bash
+    yum update -y
+    amazon-linux-extras install -y nginx1 php8.0
+    yum install -y php-fpm php-mysqlnd php-zip php-openssl php-gd php-mbstring php-xml php-json php-curl php-intl php-bcmath php-pdo php-mysqli php-cli php-common php-devel php-pecl-apcu php-pecl-redis php-soap php-xmlrpc
+    systemctl enable nginx
+    systemctl enable php-fpm
+    systemctl start nginx
+    systemctl start php-fpm
+
+    # index.phpでphpinfo()を初期表示
+    cat > /usr/share/nginx/html/index.php <<EOL
+    <?php
+    phpinfo();
+    ?>
+    EOL
+
+    # nginxのデフォルト設定をphp対応に書き換え
+    cat > /etc/nginx/conf.d/default.conf <<'NGINX'
+    server {
+        listen       80;
+        server_name  _;
+        root   /usr/share/nginx/html;
+
+        index index.php index.html index.htm;
+
+        location / {
+            try_files \$uri \$uri/ =404;
+        }
+
+        location ~ \.php$ {
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+    }
+    NGINX
+
+    systemctl restart nginx
+    systemctl restart php-fpm
+  EOF
 }
 
 // ELB
