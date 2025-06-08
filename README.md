@@ -4,7 +4,7 @@
 
 1. [Terraformのインストール方法](./terraform-install.md) を参照してTerraformをインストールしてください。
 2. [AWS CLI認証情報の設定方法](./aws-credentials.md) を参照してください。
-3. `variables.tf` の `delegated_domain`, `delegated_ns_records`, `public_key` を適切に設定してください。
+3. `variables.tf` の `delegated_domain`, `public_key` を適切に設定してください。
 
 ## 変数ファイルの作成
 
@@ -12,7 +12,6 @@
 
 ```hcl
 delegated_domain      = "example.com"
-delegated_ns_records  = ["ns-xxxx.awsdns-xx.com.","ns-yyyy.awsdns-yy.net."]
 public_key            = "ssh-rsa AAAA..."
 ```
 

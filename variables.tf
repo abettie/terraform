@@ -3,11 +3,6 @@ variable "delegated_domain" {
   type        = string
 }
 
-variable "delegated_ns_records" {
-  description = "The NS records for the delegated domain"
-  type        = list(string)
-}
-
 variable "aws_region_tokyo" {
   default     = "ap-northeast-1"
   description = "Tokyo region"
