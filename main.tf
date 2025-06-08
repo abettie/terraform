@@ -156,7 +156,7 @@ resource "aws_instance" "web" {
   subnet_id                 = aws_subnet.public_a.id
   vpc_security_group_ids    = [aws_security_group.ec2.id]
   key_name                  = aws_key_pair.main.key_name
-  associate_public_ip_address = true
+  associate_public_ip_address = false // グローバルIPを付与しない
   tags = {
     Name = "terra-ec2"
   }
