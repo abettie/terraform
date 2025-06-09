@@ -1,3 +1,4 @@
+# 東京リージョン用のACM証明書
 resource "aws_acm_certificate" "tokyo" {
   provider          = aws.tokyo
   domain_name       = var.sub_domain
@@ -7,12 +8,14 @@ resource "aws_acm_certificate" "tokyo" {
   }
 }
 
+# 東京リージョン用ACM証明書のDNS検証
 resource "aws_acm_certificate_validation" "tokyo" {
   provider                = aws.tokyo
   certificate_arn         = aws_acm_certificate.tokyo.arn
   validation_record_fqdns = [for record in aws_route53_record.tokyo_cert_validation : record.fqdn]
 }
 
+# 東京リージョン用ACM証明書の検証レコード
 resource "aws_route53_record" "tokyo_cert_validation" {
   provider = aws.tokyo
   for_each = {
@@ -29,6 +32,7 @@ resource "aws_route53_record" "tokyo_cert_validation" {
   ttl     = 300
 }
 
+# バージニアリージョン用のACM証明書
 resource "aws_acm_certificate" "virginia" {
   provider          = aws.virginia
   domain_name       = var.sub_domain
@@ -38,13 +42,14 @@ resource "aws_acm_certificate" "virginia" {
   }
 }
 
+# バージニアリージョン用ACM証明書のDNS検証
 resource "aws_acm_certificate_validation" "virginia" {
   provider                = aws.virginia
   certificate_arn         = aws_acm_certificate.virginia.arn
   validation_record_fqdns = [for record in aws_route53_record.tokyo_cert_validation : record.fqdn]
 }
 
-// VPC
+# VPC
 resource "aws_vpc" "main" {
   provider   = aws.tokyo
   cidr_block = "10.0.0.0/16"
@@ -53,7 +58,7 @@ resource "aws_vpc" "main" {
   }
 }
 
-// サブネット
+# サブネットA
 resource "aws_subnet" "public_a" {
   provider                = aws.tokyo
   vpc_id                  = aws_vpc.main.id
@@ -65,6 +70,7 @@ resource "aws_subnet" "public_a" {
   }
 }
 
+# サブネットC
 resource "aws_subnet" "public_c" {
   provider                = aws.tokyo
   vpc_id                  = aws_vpc.main.id
@@ -76,7 +82,7 @@ resource "aws_subnet" "public_c" {
   }
 }
 
-// インターネットゲートウェイ
+# インターネットゲートウェイ
 resource "aws_internet_gateway" "gw" {
   provider = aws.tokyo
   vpc_id   = aws_vpc.main.id
@@ -85,7 +91,7 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-// ルートテーブル
+# ルートテーブル
 resource "aws_route_table" "public" {
   provider = aws.tokyo
   vpc_id   = aws_vpc.main.id
@@ -94,18 +100,21 @@ resource "aws_route_table" "public" {
   }
 }
 
+# サブネットAへのルートテーブル関連付け
 resource "aws_route_table_association" "a" {
   provider       = aws.tokyo
   subnet_id      = aws_subnet.public_a.id
   route_table_id = aws_route_table.public.id
 }
 
+# サブネットCへのルートテーブル関連付け
 resource "aws_route_table_association" "c" {
   provider       = aws.tokyo
   subnet_id      = aws_subnet.public_c.id
   route_table_id = aws_route_table.public.id
 }
 
+# インターネットへのルート
 resource "aws_route" "internet_access" {
   provider               = aws.tokyo
   route_table_id         = aws_route_table.public.id
@@ -113,7 +122,7 @@ resource "aws_route" "internet_access" {
   gateway_id             = aws_internet_gateway.gw.id
 }
 
-// セキュリティグループ
+# EC2用セキュリティグループ
 resource "aws_security_group" "ec2" {
   provider = aws.tokyo
   vpc_id   = aws_vpc.main.id
@@ -142,7 +151,7 @@ resource "aws_security_group" "ec2" {
   }
 }
 
-// ELB用セキュリティグループ
+# ELB用セキュリティグループ
 resource "aws_security_group" "elb" {
   provider = aws.tokyo
   vpc_id   = aws_vpc.main.id
@@ -165,7 +174,7 @@ resource "aws_security_group" "elb" {
   }
 }
 
-// EC2 Instance Connect Endpoint
+# EC2 Instance Connect Endpoint
 resource "aws_ec2_instance_connect_endpoint" "main" {
   provider   = aws.tokyo
   subnet_id  = aws_subnet.public_a.id
@@ -175,7 +184,7 @@ resource "aws_ec2_instance_connect_endpoint" "main" {
   }
 }
 
-// EC2インスタンス
+# EC2用キーペア
 resource "aws_key_pair" "main" {
   provider   = aws.tokyo
   key_name   = "terra-key"
@@ -185,6 +194,7 @@ resource "aws_key_pair" "main" {
   }
 }
 
+# EC2インスタンス
 resource "aws_instance" "web" {
   provider                  = aws.tokyo
   ami                       = "ami-027fff96cc515f7bc" // Amazon Linux 2023
@@ -240,7 +250,7 @@ resource "aws_instance" "web" {
   EOF
 }
 
-// ELB
+# ELB
 resource "aws_lb" "web" {
   provider = aws.tokyo
   name               = "terra-elb"
@@ -253,6 +263,7 @@ resource "aws_lb" "web" {
   }
 }
 
+# ELBターゲットグループ
 resource "aws_lb_target_group" "web" {
   provider = aws.tokyo
   name     = "terra-tg"
@@ -273,6 +284,7 @@ resource "aws_lb_target_group" "web" {
   }
 }
 
+# ELBリスナー(HTTPS)
 resource "aws_lb_listener" "https" {
   provider          = aws.tokyo
   load_balancer_arn = aws_lb.web.arn
@@ -287,6 +299,7 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+# ELBターゲットグループへのアタッチ
 resource "aws_lb_target_group_attachment" "web" {
   provider         = aws.tokyo
   target_group_arn = aws_lb_target_group.web.arn
@@ -294,7 +307,7 @@ resource "aws_lb_target_group_attachment" "web" {
   port             = 80
 }
 
-// CloudFront
+# CloudFrontディストリビューション
 resource "aws_cloudfront_distribution" "web" {
   provider = aws.virginia
   enabled             = true
@@ -342,7 +355,7 @@ resource "aws_cloudfront_distribution" "web" {
   }
 }
 
-// サブドメイン用Route53レコード（CloudFront用）
+# サブドメイン用Route53レコード（CloudFront用）
 resource "aws_route53_record" "sub_domain_cloudfront" {
   zone_id = data.aws_route53_zone.delegated.zone_id
   name    = var.sub_domain
@@ -354,7 +367,7 @@ resource "aws_route53_record" "sub_domain_cloudfront" {
   }
 }
 
-// Route53ゾーンIDを自動取得（ゾーン名から）
+# Route53ゾーンIDを自動取得（ゾーン名から）
 data "aws_route53_zone" "delegated" {
   name         = var.delegated_domain
   private_zone = false
