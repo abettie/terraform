@@ -164,7 +164,7 @@ resource "aws_key_pair" "main" {
 
 resource "aws_instance" "web" {
   provider                  = aws.tokyo
-  ami                       = "ami-0df99b3a8349462c6" // Amazon Linux 2 (ap-northeast-1)
+  ami                       = "ami-027fff96cc515f7bc" // Amazon Linux 2023
   instance_type             = var.instance_type
   subnet_id                 = aws_subnet.public_a.id
   vpc_security_group_ids    = [aws_security_group.ec2.id]
