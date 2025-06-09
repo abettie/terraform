@@ -103,6 +103,22 @@ resource "aws_route_table" "public" {
   }
 }
 
+# インターネットへのIPv4ルート
+resource "aws_route" "internet_access" {
+  provider               = aws.tokyo
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.gw.id
+}
+
+# インターネットへのIPv6ルート
+resource "aws_route" "internet_access_ipv6" {
+  provider                   = aws.tokyo
+  route_table_id             = aws_route_table.public.id
+  destination_ipv6_cidr_block = "::/0"
+  gateway_id                 = aws_internet_gateway.gw.id
+}
+
 # サブネットAへのルートテーブル関連付け
 resource "aws_route_table_association" "a" {
   provider       = aws.tokyo
@@ -115,14 +131,6 @@ resource "aws_route_table_association" "c" {
   provider       = aws.tokyo
   subnet_id      = aws_subnet.public_c.id
   route_table_id = aws_route_table.public.id
-}
-
-# インターネットへのルート
-resource "aws_route" "internet_access" {
-  provider               = aws.tokyo
-  route_table_id         = aws_route_table.public.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.gw.id
 }
 
 # EC2用セキュリティグループ
@@ -139,18 +147,21 @@ resource "aws_security_group" "ec2" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -168,12 +179,14 @@ resource "aws_security_group" "elb" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] // 必要に応じてCloudFrontのIPレンジに制限可能
+    ipv6_cidr_blocks = ["::/0"]
   }
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -210,48 +223,6 @@ resource "aws_instance" "web" {
   tags = {
     Name = "terra-ec2"
   }
-  user_data = <<-EOF
-    #!/bin/bash
-    yum update -y
-    amazon-linux-extras install -y nginx1 php8.0
-    yum install -y php-fpm php-mysqlnd php-zip php-openssl php-gd php-mbstring php-xml php-json php-curl php-intl php-bcmath php-pdo php-mysqli php-cli php-common php-devel php-pecl-apcu php-pecl-redis php-soap php-xmlrpc
-    systemctl enable nginx
-    systemctl enable php-fpm
-    systemctl start nginx
-    systemctl start php-fpm
-
-    # index.phpでphpinfo()を初期表示
-    cat > /usr/share/nginx/html/index.php <<EOL
-    <?php
-    phpinfo();
-    ?>
-    EOL
-
-    # nginxのデフォルト設定をphp対応に書き換え
-    cat > /etc/nginx/conf.d/default.conf <<'NGINX'
-    server {
-        listen       80;
-        server_name  _;
-        root   /usr/share/nginx/html;
-
-        index index.php index.html index.htm;
-
-        location / {
-            try_files \$uri \$uri/ =404;
-        }
-
-        location ~ \.php$ {
-            fastcgi_pass   127.0.0.1:9000;
-            fastcgi_index  index.php;
-            fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name;
-            include        fastcgi_params;
-        }
-    }
-    NGINX
-
-    systemctl restart nginx
-    systemctl restart php-fpm
-  EOF
 }
 
 # ELB
