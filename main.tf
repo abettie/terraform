@@ -1,6 +1,6 @@
 resource "aws_acm_certificate" "tokyo" {
   provider          = aws.tokyo
-  domain_name       = var.delegated_domain
+  domain_name       = var.sub_domain
   validation_method = "DNS"
   tags = {
     Name = "terra-acm-tokyo"
@@ -31,7 +31,7 @@ resource "aws_route53_record" "tokyo_cert_validation" {
 
 resource "aws_acm_certificate" "virginia" {
   provider          = aws.virginia
-  domain_name       = var.delegated_domain
+  domain_name       = var.sub_domain
   validation_method = "DNS"
   tags = {
     Name = "terra-acm-virginia"
@@ -142,6 +142,29 @@ resource "aws_security_group" "ec2" {
   }
 }
 
+// ELB用セキュリティグループ
+resource "aws_security_group" "elb" {
+  provider = aws.tokyo
+  vpc_id   = aws_vpc.main.id
+  name     = "terra-elb-sg"
+  tags = {
+    Name = "terra-elb-sg"
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] // 必要に応じてCloudFrontのIPレンジに制限可能
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 // EC2 Instance Connect Endpoint
 resource "aws_ec2_instance_connect_endpoint" "main" {
   provider   = aws.tokyo
@@ -224,7 +247,7 @@ resource "aws_lb" "web" {
   internal           = false
   load_balancer_type = "application"
   subnets            = [aws_subnet.public_a.id, aws_subnet.public_c.id]
-  security_groups    = [aws_security_group.ec2.id]
+  security_groups    = [aws_security_group.elb.id]
   tags = {
     Name = "terra-elb"
   }
@@ -277,7 +300,7 @@ resource "aws_cloudfront_distribution" "web" {
   enabled             = true
   is_ipv6_enabled     = true
   comment             = "terra-cloudfront"
-  aliases             = [var.delegated_domain]
+  aliases             = [var.sub_domain]
   default_root_object = ""
   origin {
     domain_name = aws_lb.web.dns_name
@@ -316,6 +339,18 @@ resource "aws_cloudfront_distribution" "web" {
   }
   tags = {
     Name = "terra-cloudfront"
+  }
+}
+
+// サブドメイン用Route53レコード（CloudFront用）
+resource "aws_route53_record" "sub_domain_cloudfront" {
+  zone_id = data.aws_route53_zone.delegated.zone_id
+  name    = var.sub_domain
+  type    = "A"
+  alias {
+    name                   = aws_cloudfront_distribution.web.domain_name
+    zone_id                = aws_cloudfront_distribution.web.hosted_zone_id
+    evaluate_target_health = false
   }
 }
 
