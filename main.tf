@@ -87,6 +87,15 @@ resource "aws_subnet" "public_c" {
   }
 }
 
+# インターネットゲートウェイ
+resource "aws_internet_gateway" "main" {
+  provider = aws.tokyo
+  vpc_id   = aws_vpc.main.id
+  tags = {
+    Name = "terra-igw"
+  }
+}
+
 # Egress Only インターネットゲートウェイ
 resource "aws_egress_only_internet_gateway" "egress_only" {
   provider = aws.tokyo
@@ -103,6 +112,14 @@ resource "aws_route_table" "public" {
   tags = {
     Name = "terra-rtb"
   }
+}
+
+# インターネットへのIPv4ルート
+resource "aws_route" "internet_access_ipv4" {
+  provider                  = aws.tokyo
+  route_table_id            = aws_route_table.public.id
+  destination_cidr_block    = "0.0.0.0/0"
+  gateway_id                = aws_internet_gateway.main.id
 }
 
 # インターネットへのIPv6ルート
