@@ -87,12 +87,12 @@ resource "aws_subnet" "public_c" {
   }
 }
 
-# インターネットゲートウェイ
-resource "aws_internet_gateway" "gw" {
+# Egress Only インターネットゲートウェイ
+resource "aws_egress_only_internet_gateway" "egress_only" {
   provider = aws.tokyo
   vpc_id   = aws_vpc.main.id
   tags = {
-    Name = "terra-igw"
+    Name = "terra-egress-only-igw"
   }
 }
 
@@ -105,20 +105,12 @@ resource "aws_route_table" "public" {
   }
 }
 
-# インターネットへのIPv4ルート
-resource "aws_route" "internet_access" {
-  provider               = aws.tokyo
-  route_table_id         = aws_route_table.public.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.gw.id
-}
-
 # インターネットへのIPv6ルート
 resource "aws_route" "internet_access_ipv6" {
   provider                   = aws.tokyo
   route_table_id             = aws_route_table.public.id
   destination_ipv6_cidr_block = "::/0"
-  gateway_id                 = aws_internet_gateway.gw.id
+  egress_only_gateway_id     = aws_egress_only_internet_gateway.egress_only.id
 }
 
 # サブネットAへのルートテーブル関連付け
