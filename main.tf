@@ -133,6 +133,30 @@ resource "aws_route_table_association" "c" {
   route_table_id = aws_route_table.public.id
 }
 
+# デフォルトセキュリティグループ（自身からの全トラフィックのみ許可）
+resource "aws_security_group" "default" {
+  provider = aws.tokyo
+  vpc_id   = aws_vpc.main.id
+  name     = "terra-default-sg"
+  tags = {
+    Name = "terra-default-sg"
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
 # EC2用セキュリティグループ
 resource "aws_security_group" "ec2" {
   provider = aws.tokyo
@@ -194,7 +218,7 @@ resource "aws_security_group" "elb" {
 resource "aws_ec2_instance_connect_endpoint" "main" {
   provider   = aws.tokyo
   subnet_id  = aws_subnet.public_a.id
-  security_group_ids = [aws_security_group.ec2.id]
+  security_group_ids = [aws_security_group.default.id]
   tags = {
     Name = "terra-ec2-ice"
   }
@@ -216,7 +240,7 @@ resource "aws_instance" "web" {
   ami                       = "ami-027fff96cc515f7bc" // Amazon Linux 2023
   instance_type             = var.instance_type
   subnet_id                 = aws_subnet.public_a.id
-  vpc_security_group_ids    = [aws_security_group.ec2.id]
+  vpc_security_group_ids    = [aws_security_group.default.id]
   key_name                  = aws_key_pair.main.key_name
   associate_public_ip_address = false // グローバルIPv4は付与しない
   ipv6_address_count        = 1      // IPv6アドレスを1つ割り当て
@@ -232,7 +256,7 @@ resource "aws_lb" "web" {
   internal           = false
   load_balancer_type = "application"
   subnets            = [aws_subnet.public_a.id, aws_subnet.public_c.id]
-  security_groups    = [aws_security_group.elb.id]
+  security_groups    = [aws_security_group.default.id]
   tags = {
     Name = "terra-elb"
   }
