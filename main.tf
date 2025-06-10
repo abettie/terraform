@@ -69,6 +69,7 @@ resource "aws_subnet" "public_a" {
   availability_zone       = "ap-northeast-1a"
   map_public_ip_on_launch = false
   ipv6_cidr_block         = "${cidrsubnet(aws_vpc.main.ipv6_cidr_block, 8, 0)}"
+  assign_ipv6_address_on_creation = true
   tags = {
     Name = "terra-subnet-a"
   }
@@ -82,6 +83,7 @@ resource "aws_subnet" "public_c" {
   availability_zone       = "ap-northeast-1c"
   map_public_ip_on_launch = false
   ipv6_cidr_block         = "${cidrsubnet(aws_vpc.main.ipv6_cidr_block, 8, 1)}"
+  assign_ipv6_address_on_creation = true
   tags = {
     Name = "terra-subnet-c"
   }
@@ -253,8 +255,6 @@ resource "aws_instance" "web" {
   subnet_id                 = aws_subnet.public_a.id
   vpc_security_group_ids    = [aws_security_group.default.id]
   key_name                  = aws_key_pair.main.key_name
-  associate_public_ip_address = false // グローバルIPv4は付与しない
-  ipv6_address_count        = 1      // IPv6アドレスを1つ割り当て
   tags = {
     Name = "terra-ec2"
   }
