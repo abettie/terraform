@@ -338,46 +338,41 @@ resource "aws_cloudfront_distribution" "web" {
   logging_config {
     bucket = aws_s3_bucket.log.bucket_regional_domain_name
     include_cookies = false
-    prefix = "cloudfront-${sub_domain}/"
+    prefix = "cloudfront-${var.sub_domain}/"
   }
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "terra-elb"
+    compress = true
     viewer_protocol_policy = "redirect-to-https"
     cache_policy_id        = "83da9c7e-98b4-4e11-a168-04f0df8e2c65" # UseOriginCacheControlHeaders
     origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3" # AllViewer
-    forwarded_values {
-      query_string = true
-      cookies {
-        forward = "all"
-      }
-    }
   }
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.virginia.arn
     ssl_support_method  = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
-  depends_on = [aws_acm_certificate_validation.virginia]
+  depends_on = [aws_acm_certificate_validation.virginia, aws_s3_bucket.log]
   restrictions {
     geo_restriction {
       restriction_type = "none"
     }
   }
+  price_class = "PriceClass_200"
   tags = {
     Name = "terra-cloudfront"
   }
-  price_class = "PriceClass_200"
 }
 
 # CloudFrontログ保存用S3バケット
 resource "aws_s3_bucket" "log" {
   provider = aws.tokyo
-  bucket   = "log"
+  bucket   = "log-${var.sub_domain}"
   force_destroy = true
   tags = {
-    Name = "terra-log}"
+    Name = "terra-log"
   }
 }
 
