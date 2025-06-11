@@ -255,6 +255,13 @@ resource "aws_instance" "web" {
   subnet_id                 = aws_subnet.public_a.id
   vpc_security_group_ids    = [aws_security_group.default.id, aws_security_group.ec2.id]
   key_name                  = aws_key_pair.main.key_name
+  user_data = <<EOF
+    #!/bin/bash
+    sudo dnf -y upgrade
+    sudo dnf -y install nginx
+    sudo systemctl enable nginx
+    sudo systemctl start nginx
+  EOF
   tags = {
     Name = "terra-ec2"
   }
@@ -376,9 +383,16 @@ resource "aws_s3_bucket" "log" {
   }
 }
 
+resource "aws_s3_bucket_ownership_controls" "log" {
+  bucket = aws_s3_bucket.log.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
 # S3バケットにACL設定
 resource "aws_s3_bucket_acl" "log" {
-  depends_on = [aws_s3_bucket.log]
+  depends_on = [aws_s3_bucket_ownership_controls.log]
   bucket = aws_s3_bucket.log.id
   acl    = "log-delivery-write"
 }
