@@ -335,6 +335,11 @@ resource "aws_cloudfront_distribution" "web" {
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
+  logging_config {
+    bucket = aws_s3_bucket.log.bucket_regional_domain_name
+    include_cookies = false
+    prefix = "cloudfront-${sub_domain}/"
+  }
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods   = ["GET", "HEAD"]
@@ -362,6 +367,16 @@ resource "aws_cloudfront_distribution" "web" {
   }
   tags = {
     Name = "terra-cloudfront"
+  }
+}
+
+# CloudFrontログ保存用S3バケット
+resource "aws_s3_bucket" "log" {
+  provider = aws.tokyo
+  bucket   = "log"
+  force_destroy = true
+  tags = {
+    Name = "terra-log}"
   }
 }
 
