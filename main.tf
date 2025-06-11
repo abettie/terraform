@@ -354,7 +354,7 @@ resource "aws_cloudfront_distribution" "web" {
     ssl_support_method  = "sni-only"
     minimum_protocol_version = "TLSv1.2_2021"
   }
-  depends_on = [aws_acm_certificate_validation.virginia, aws_s3_bucket.log]
+  depends_on = [aws_acm_certificate_validation.virginia, aws_s3_bucket_acl.log]
   restrictions {
     geo_restriction {
       restriction_type = "none"
@@ -374,6 +374,13 @@ resource "aws_s3_bucket" "log" {
   tags = {
     Name = "terra-log"
   }
+}
+
+# S3バケットにACL設定
+resource "aws_s3_bucket_acl" "log" {
+  depends_on = [aws_s3_bucket.log]
+  bucket = aws_s3_bucket.log.id
+  acl    = "log-delivery-write"
 }
 
 # サブドメイン用Route53レコード（CloudFront用）
