@@ -255,7 +255,7 @@ resource "aws_instance" "web" {
   subnet_id                 = aws_subnet.public_a.id
   vpc_security_group_ids    = [aws_security_group.default.id, aws_security_group.ec2.id]
   key_name                  = aws_key_pair.main.key_name
-  user_data = <<EOF
+  user_data = <<-EOF
     #!/bin/bash
     sudo dnf -y upgrade
     sudo dnf -y install nginx
