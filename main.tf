@@ -253,6 +253,7 @@ resource "aws_instance" "web" {
   ami                       = "ami-027fff96cc515f7bc" // Amazon Linux 2023
   instance_type             = var.instance_type
   subnet_id                 = aws_subnet.public_a.id
+  associate_public_ip_address = true
   vpc_security_group_ids    = [aws_security_group.default.id, aws_security_group.ec2.id]
   key_name                  = aws_key_pair.main.key_name
   user_data = <<-EOF
