@@ -8,6 +8,16 @@ variable "sub_domain" {
   type        = string
 }
 
+variable "image_domain" {
+  description = "The domain name for image"
+  type        = string
+}
+
+variable "image_s3_bucket" {
+  description = "The bucket name for image"
+  type        = string
+}
+
 variable "aws_region_tokyo" {
   default     = "ap-northeast-1"
   description = "Tokyo region"
