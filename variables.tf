@@ -18,6 +18,16 @@ variable "image_s3_bucket" {
   type        = string
 }
 
+variable "image_domain_test" {
+  description = "The domain name for test image"
+  type        = string
+}
+
+variable "image_s3_bucket_test" {
+  description = "The bucket name for test image"
+  type        = string
+}
+
 variable "aws_region_tokyo" {
   default     = "ap-northeast-1"
   description = "Tokyo region"
