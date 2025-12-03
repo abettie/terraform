@@ -13,6 +13,11 @@
 
 ```hcl
 delegated_domain      = "example.com"
+sub_domain            = "example.com"
+image_domain          = "example-img.com"
+image_domain_test     = "example-img-test.com"
+image_s3_bucket       = "example"
+image_s3_bucket_test  = "example-test"
 public_key            = "ssh-rsa AAAA..."
 ```
 
